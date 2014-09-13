@@ -8,6 +8,7 @@
 -- from GFConfig (which is most of them).
 --
 -- File history
+-- 2014-09-13: Turn off MCP values
 -- 2014-07-01: Added flight attendant and ground crew simulation
 -- 2014-06-30: Initial creation completed
 -- 2014-06-24: Initial creation
@@ -42,7 +43,7 @@ xpdr_unit		= 0
 
 -- Know we got in here.
 gfd.SetDisplay(GF46,0,0,"IFLY")
-gfd.SetDisplay(GF46,0,1,140701)
+gfd.SetDisplay(GF46,0,1,140913)
 
 --------------------------------------------------------------------------------
 -- Initialize aircraft (sets aircraft to match T8 switch settings)
@@ -393,13 +394,22 @@ event.offset("941E", "UB", "setAutobrakeDisarmLight")
 
 -- Altitude
 function updateAltitude(offset, value)
-	gfd.SetDisplay(mcp_model,mcp_unit,4,value)
+	if value == 65535 then
+		-- blank display
+		gfd.SetDisplay(mcp_model,mcp_unit,4,"")
+	else
+		-- display altitude
+		gfd.SetDisplay(mcp_model,mcp_unit,4,value)
+	end
 end
 event.offset("943A","UW","updateAltitude")
 
 -- Captain Course
 function updateCaptCourse(offset, value)
-	if value < 10 then
+	if value == 65535 then
+		-- blank display
+		display = ""
+	elseif value < 10 then
 		display = "00"..value
 	elseif value < 100 then
 		display = "0"..value
@@ -412,7 +422,10 @@ event.offset("9434","UW","updateCaptCourse")
 
 -- Heading
 function updateHeading(offset, value)
-	if value < 10 then
+	if value == 65535 then
+		-- blank display
+		display = ""
+	elseif value < 10 then
 		display = "00"..value
 	elseif value < 100 then
 		display = "0"..value
@@ -604,6 +617,7 @@ event.offset("94D0", "UB", "updateXpdrIdent")
 --
 -- When ground crew called using the Ground Call button, this will either
 -- connect or disconnect ground services (Power and Air)
+-- XXX Not working
 --
 -- Offset List
 -- 940E 6 GRD_POWER_AVAILABLE_Light_Status
@@ -644,6 +658,8 @@ event.offset("94E9", "UB", "doGroundCrew")
 -- PREFLIGHT -------------------------------------------------------------------
 --
 -- Opens the doors and attaches ground services prior to flight.
+-- XXX Not working
+-- 
 -- 941F 0 Parking_Brake_Light_Status
 -- 9400 1213 KEY_COMMAND_AIRSYSTEM_GROUND_SUPPLY_ON
 -- 9400 1215 KEY_COMMAND_ELECTRICAL_GROUND_SUPPLY_ON
@@ -661,3 +677,6 @@ if logic.And(pbrake,0x0001) ~=0 then
 	--ipc.writeUW("9400",1223) -- Exit 2 (?)
 	--ipc.writeUW("9400",1226) -- Exit 3 (?)
 end
+
+-- END PREFLIGHT ---------------------------------------------------------------
+--------------------------------------------------------------------------------
